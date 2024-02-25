@@ -14,8 +14,4 @@ export class CreateTaskDTO{
     @IsEnum(Priority)
     @IsNotEmpty()
     priority: Priority;
-
-    @IsEnum(TaskStatus)
-    @IsNotEmpty()
-    status: TaskStatus;
 }

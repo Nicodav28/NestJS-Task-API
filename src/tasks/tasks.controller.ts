@@ -1,7 +1,6 @@
-import { Controller, Get, Post, Patch, Delete, Param, Body } from '@nestjs/common';
+import { Controller, Get, Post, Patch, Delete, Param, Body, ConflictException, NotFoundException, HttpCode } from '@nestjs/common';
 import { TasksService } from './tasks.service';
 import { Task } from 'src/schemas/task.schema';
-import { UUID } from 'crypto';
 import { CreateTaskDTO } from 'src/dto/create-task.dto';
 import { UpdateTaskDTO } from 'src/dto/update-task.dto';
 
@@ -14,32 +13,56 @@ export class TasksController {
     }
 
     @Get()
-    findAllTasks(): Promise<Task[]> 
+    async findAllTasks(): Promise<Task[]> 
     {
-        return this.taskService.findAllTasks();
+        return await this.taskService.findAllTasks();
     }
 
     @Get(':id')
-    findTaskById(@Param('id') taskId: UUID): Promise<Task> 
+    async findTaskById(@Param('id') taskId: string): Promise<Task> 
     {
-        return this.taskService.findTaskById(taskId);
+
+        const task = await this.taskService.findTaskById(taskId);
+
+        if(!task) throw new NotFoundException("Task not found");
+
+        return task;
+
     }
 
     @Post('create')
-    createTask(@Body() task: CreateTaskDTO): Promise<Task> 
+    async createTask(@Body() task: CreateTaskDTO): Promise<Task> 
     {
-        return this.taskService.createTask(task);
+        try{
+            return await this.taskService.createTask(task);
+        }catch(error){
+            if(error.code == 11000){
+                throw new ConflictException("Task already exists.")
+            }
+
+            throw new Error;
+        }
     }
 
     @Patch('update/:id')
-    updateTask(@Param('id') taskId: UUID, @Body() updateFields: UpdateTaskDTO): Promise<Task>
+    async updateTask(@Param('id') taskId: string, @Body() updateFields: UpdateTaskDTO): Promise<Task>
     {
-        return this.taskService.updateTask(taskId, updateFields)
+        const updatedTask = await this.taskService.updateTask(taskId, updateFields)
+
+        if(!updatedTask) throw new NotFoundException("Task not found");
+
+        return updatedTask;
+        
     }
 
     @Delete('delete/:id')
-    deleteTask(@Param('id') taskId: UUID): Promise<Task>
+    @HttpCode(204)
+    async deleteTask(@Param('id') taskId: string): Promise<Task>
     {
-        return this.taskService.deleteTask(taskId)
+        const deletedTask = await this.taskService.deleteTask(taskId)
+
+        if(!deletedTask) throw new NotFoundException("Task not found");
+
+        return deletedTask;
     }
 }
