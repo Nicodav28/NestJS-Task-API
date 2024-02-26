@@ -4,6 +4,7 @@ import { Model } from 'mongoose';
 import { CreateTaskDTO } from 'src/dto/create-task.dto';
 import { UpdateTaskDTO } from 'src/dto/update-task.dto';
 import { Task } from 'src/schemas/task.schema';
+import { TaskStatus } from 'src/enum/task-status.enum';
 
 @Injectable()
 export class TasksService {
@@ -20,6 +21,7 @@ export class TasksService {
 
     async createTask(task: CreateTaskDTO): Promise<Task> 
     {
+        task.status = TaskStatus.PENDING;
         const newTask = new this.taskModel(task);
         return await newTask.save();
     }
